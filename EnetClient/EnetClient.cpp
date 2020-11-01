@@ -1,20 +1,47 @@
-// EnetClient.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
+#include <enet/enet.h>
+
+ENetHost * client;
+ENetAddress serverAddress;
+ENetEvent event;
+ENetPeer * peer;
+
+using namespace std;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	if (enet_initialize() != 0) {
+		cout << "Unable to initialize enet." << endl;
+		return 1;
+	}
+	else {
+		cout << "Initialized enet." << endl;
+	}
+	atexit(enet_deinitialize);
+
+	client = enet_host_create(NULL, 1, 2, 0, 0);
+
+	if (client == NULL) {
+		cout << "Unabe to create a client." << endl;
+		return 1;
+	}
+
+	enet_address_set_host(&serverAddress, "213.179.209.168");
+	serverAddress.port = 17201;
+
+	peer = enet_host_connect(client, &serverAddress, 2, 0);
+
+	if (peer == NULL) {
+		cout << "Unable to connect to the server." << endl;
+		return 1;
+	}
+
+	if (enet_host_service(client, &event, 30000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
+		cout << "Connection has been established with the Growtopia Server." << endl;
+	} else {
+		cout << "Unable to establish a connection." << endl;
+	}
+
+	enet_host_destroy(client);
+	return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
