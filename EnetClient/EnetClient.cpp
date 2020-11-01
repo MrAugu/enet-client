@@ -1,6 +1,8 @@
 #include <iostream>
 #include <enet/enet.h>
 #include "Packet.h"
+#include "Utils.h"
+#include "Creds.h"
 
 ENetHost * client;
 ENetAddress serverAddress;
@@ -44,9 +46,6 @@ int main()
 
 	if (enet_host_service(client, &event, 1000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
 		cout << "Connected to the server." << endl;
-
-
-
 	} else {
 		enet_peer_reset(peer);
 		cout << "Unable to connect to the server." << endl;
@@ -55,14 +54,24 @@ int main()
 
 	while (1) {
 		while (enet_host_service(client, &event, 1000) > 0) {
-			switch (event.type) {
-				case ENET_EVENT_TYPE_RECEIVE:
-					cout << "Received an event from the server." << endl;
-					break;
-				case ENET_EVENT_TYPE_DISCONNECT:
-					cout << "Disconnected from the server." << endl;
-					// Insert Disconnection Handling Code
-					break;
+			if (event.type == ENET_EVENT_TYPE_RECEIVE) {
+				cout << "Received an event from the server." << endl;
+				
+				int messageType = packet::get_message_type(event.packet);
+				
+				if (messageType == 1) {
+					string fHash = to_string((unsigned int)rand());
+					string sHash = to_string((unsigned int)rand());
+					string tankLogin = "tankIDName|" + creds::gtUsername + "\ntankIDPass|" + creds::gtPassword + "\nrequestedName|DuhBa\nf|0\nprotocol|38\ngame_version|3.46\nfz|13812200\nlmode|0\ncbits|0\nhash2|" + sHash + "\nmeta | " + utils::generate_meta() + "\nfhash|-716928004\nrid|" + utils::generate_rid() + "\nplatformID|0\ndeviceVersion|0\ncountry|cz\nhash|" + fHash + "\nmac|" + utils::generate_mac() + "\nwk|" + utils::generate_rid() + "\nzf|13837395";
+					cout << tankLogin << endl;
+					packet::send(2, tankLogin, peer);
+				}
+
+				break;
+			} else if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
+				cout << "Disconnected from the server." << endl;
+				// Insert Disconnection Handling Code
+				break;
 			}
 		}
 	}

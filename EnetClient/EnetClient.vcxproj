@@ -159,8 +159,10 @@
   <ItemGroup>
     <ClCompile Include="EnetClient.cpp" />
     <ClCompile Include="Packet.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Creds.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
