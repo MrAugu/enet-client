@@ -5,6 +5,7 @@ ENetHost * client;
 ENetAddress serverAddress;
 ENetEvent event;
 ENetPeer * peer;
+bool isConnected;
 
 using namespace std;
 
@@ -26,6 +27,9 @@ int main()
 		return 1;
 	}
 
+	client->checksum = enet_crc32;
+	enet_host_compress_with_range_coder(client);
+
 	enet_address_set_host(&serverAddress, "213.179.209.168");
 	serverAddress.port = 17201;
 
@@ -36,11 +40,15 @@ int main()
 		return 1;
 	}
 
-	if (enet_host_service(client, &event, 30000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT) {
-		cout << "Connection has been established with the Growtopia Server." << endl;
-	} else {
-		cout << "Unable to establish a connection." << endl;
-	}
+	// Work In Progress
+	// while (enet_host_service(client, &event, 0) > 0) {
+	//	 if (event.type == ENET_EVENT_TYPE_CONNECT) {
+	// 		cout << "Connection established, connect event received." << endl;
+	//	 }
+	//	 else if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
+	// 		 cout << "Connection terminated by the server." << endl;
+	// 	 }
+	//  }
 
 	enet_host_destroy(client);
 	return 0;
