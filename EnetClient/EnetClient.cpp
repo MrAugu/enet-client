@@ -1,8 +1,10 @@
 #include <iostream>
 #include <enet/enet.h>
-#include "Packet.h"
 #include "Utils.h"
 #include "Creds.h"
+#include "Packet.h"
+#include <stdexcept>
+#include <random>
 
 ENetHost * client;
 ENetAddress serverAddress;
@@ -10,6 +12,77 @@ ENetEvent event;
 ENetPeer * peer;
 
 using namespace std;
+using namespace packet;
+
+
+string string_to_hex(const string& input) {
+	static const char hex_digits[] = "0123456789ABCDEF";
+
+	string output;
+	output.reserve(input.length() * 2);
+	for (unsigned char c : input) {
+		output.push_back(hex_digits[c >> 4]);
+		output.push_back(hex_digits[c & 15]);
+	}
+	return output;
+}
+
+int hex_value(unsigned char hex_digit) {
+	static const signed char hex_values[256] = {
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+		-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+		-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	};
+	int value = hex_values[hex_digit];
+	if (value == -1) throw invalid_argument("invalid hex digit");
+	return value;
+}
+
+string hex_to_string(const string& input) {
+	const auto len = input.length();
+	if (len & 1) throw invalid_argument("odd length");
+
+	string output;
+	output.reserve(len / 2);
+	for (auto it = input.begin(); it != input.end(); )
+	{
+		int hi = hex_value(*it++);
+		int lo = hex_value(*it++);
+		output.push_back(hi << 4 | lo);
+	}
+	return output;
+}
+
+string random_string(string::size_type length) {
+	static auto& chrs = "0123456789"
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+	thread_local static mt19937 rg{ random_device{}() };
+	thread_local static uniform_int_distribution<string::size_type> pick(0, sizeof(chrs) - 2);
+
+	string s;
+
+	s.reserve(length);
+
+	while (length--)
+		s += chrs[pick(rg)];
+
+	return s;
+}
 
 int main()
 {
@@ -33,7 +106,7 @@ int main()
 	enet_host_compress_with_range_coder(client);
 
 	enet_address_set_host(&serverAddress, "213.179.209.168");
-	serverAddress.port = 17201;
+	serverAddress.port = 17197;
 
 	cout << "Connecting to the server..." << endl;
 
@@ -53,18 +126,61 @@ int main()
 	}
 
 	while (1) {
-		while (enet_host_service(client, &event, 1000) > 0) {
+		cout << "b" << endl;
+		while (enet_host_service(client, &event, 0) > 0) {
+			cout << "a" << endl;
 			if (event.type == ENET_EVENT_TYPE_RECEIVE) {
-				cout << "Received an event from the server." << endl;
-				
-				int messageType = packet::get_message_type(event.packet);
-				
+				int messageType = get_message_type(event.packet);
+				cout << "Received an event from the server, of the type " + to_string(messageType) + "." << endl;
+
 				if (messageType == 1) {
-					string fHash = to_string((unsigned int)rand());
-					string sHash = to_string((unsigned int)rand());
-					string tankLogin = "tankIDName|" + creds::gtUsername + "\ntankIDPass|" + creds::gtPassword + "\nrequestedName|DuhBa\nf|0\nprotocol|38\ngame_version|3.46\nfz|13812200\nlmode|0\ncbits|0\nhash2|" + sHash + "\nmeta | " + utils::generate_meta() + "\nfhash|-716928004\nrid|" + utils::generate_rid() + "\nplatformID|0\ndeviceVersion|0\ncountry|cz\nhash|" + fHash + "\nmac|" + utils::generate_mac() + "\nwk|" + utils::generate_rid() + "\nzf|13837395";
-					cout << tankLogin << endl;
-					packet::send(2, tankLogin, peer);
+					//string fHash = to_string((unsigned int)rand());
+					//string sHash = to_string((unsigned int)rand());
+					//string fz = to_string((unsigned int)rand());
+					//string zf = to_string((unsigned int)rand());
+					string sHash = "-82716716";
+					string fHash = "-1663976460";
+					string fz = "7010984";
+					string zf = "1486951257";
+
+					string rid = string_to_hex(random_string(16));
+					string wk = string_to_hex(random_string(16));
+					string gameVersion = "3.47";
+					string country = "us";
+					string packetText = "";
+					string mac = "2c:6f:c9:50:d0:69";
+
+					//if (creds::gtPassword != "" && creds::gtUsername != "") {
+					//	packetText += "tankIDName|" + (creds::gtUsername + "\n");
+					//	packetText += "tankIDPass|" + (creds::gtPassword + "\n");
+					//}
+					
+					packetText += "requestedName|SickleTiny\n";
+					packetText += "f|1\n";
+					packetText += "protocol|112\n";
+					packetText += "game_version|" + (gameVersion + "\n");
+					packetText += "fz|"+ (fz + "\n");
+					packetText += "lmode|0\n";
+					packetText += "cbits|0\n";
+					packetText += "player_age|28\n";
+					packetText += "GDPR|1\n";
+					packetText += "hash2|" + (sHash + "\n");
+					packetText += "meta|growbrew.com\n";
+					packetText += "fhash|-716928004\n";
+					packetText += "rid|" + (rid + "\n");
+					packetText += "platformID|0\n";
+					packetText += "deviceVersion|0\n";
+					packetText += "country|" + (country + "\n");
+					packetText += "hash|" + (fHash + "\n");
+					packetText += "mac|" + (mac + "\n");
+					packetText += "wk|" + (wk + "\n");
+					packetText += "zf|" + (zf + "\n");
+
+					cout << packetText << endl;
+
+					send(2, packetText, peer);
+
+					cout << "Sent the login tank packet." << endl;
 				}
 
 				break;
