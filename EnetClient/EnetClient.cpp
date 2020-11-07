@@ -126,9 +126,7 @@ int main()
 	}
 
 	while (1) {
-		cout << "b" << endl;
 		while (enet_host_service(client, &event, 0) > 0) {
-			cout << "a" << endl;
 			if (event.type == ENET_EVENT_TYPE_RECEIVE) {
 				int messageType = get_message_type(event.packet);
 				cout << "Received an event from the server, of the type " + to_string(messageType) + "." << endl;
@@ -150,10 +148,10 @@ int main()
 					string packetText = "";
 					string mac = "2c:6f:c9:50:d0:69";
 
-					//if (creds::gtPassword != "" && creds::gtUsername != "") {
-					//	packetText += "tankIDName|" + (creds::gtUsername + "\n");
-					//	packetText += "tankIDPass|" + (creds::gtPassword + "\n");
-					//}
+					if (creds::gtPassword != "" && creds::gtUsername != "") {
+						packetText += "tankIDName|" + (creds::gtUsername + "\n");
+						packetText += "tankIDPass|" + (creds::gtPassword + "\n");
+					}
 					
 					packetText += "requestedName|SickleTiny\n";
 					packetText += "f|1\n";
@@ -165,10 +163,10 @@ int main()
 					packetText += "player_age|28\n";
 					packetText += "GDPR|1\n";
 					packetText += "hash2|" + (sHash + "\n");
-					packetText += "meta|growbrew.com\n";
+					packetText += "meta|localhost\n";
 					packetText += "fhash|-716928004\n";
 					packetText += "rid|" + (rid + "\n");
-					packetText += "platformID|0\n";
+					packetText += "platformID|4\n";
 					packetText += "deviceVersion|0\n";
 					packetText += "country|" + (country + "\n");
 					packetText += "hash|" + (fHash + "\n");
