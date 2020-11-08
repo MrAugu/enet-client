@@ -13,6 +13,7 @@ ENetPeer * peer;
 string ServerIp = "213.179.209.168";
 int luser = 0;
 int ltoken = 0;
+bool ctss = false;
 
 using namespace std;
 using namespace packet;
@@ -51,6 +52,7 @@ struct OnSendToServerStruct
 };
 
 void OnSendToServer(string address, int port, int login_user, int login_token) {
+	if (ctss != false) return;
 	cout << "Switching sub-server, connecting to: address " + address + ", port " + to_string(port) + ", session user " + to_string(login_user) + ", session token " + to_string(login_token) + "." << endl;
 
 	luser = login_user;
@@ -321,6 +323,7 @@ void SerializeFromMem(byte *pSrc, int bufferSize, int *pBytesReadOut, int netId)
 	if (action == "OnSendToServer") {
 		OnSendToServer(((OnSendToServerStruct*)dataStruct)->address, ((OnSendToServerStruct*)dataStruct)->port, ((OnSendToServerStruct*)dataStruct)->userId, ((OnSendToServerStruct*)dataStruct)->token);
 	} else if (action == "OnConsoleMessage") {
+		cout << ((OnConsoleMessageStruct*)dataStruct)->message << endl;
 		//OnConsoleMessage(((OnConsoleMessageStruct*)dataStruct)->message);
 	} else if (action == "OnPlayPositioned") {
 		//OnPlayPositioned(((OnPlayPositionedStruct*)dataStruct)->sound);
@@ -437,10 +440,12 @@ string generateTankPacket () {
 
 	if (luser != 0 && ltoken != 0) {
 	  token = "\nuser|" + to_string(luser) + "\ntoken|" + to_string(ltoken);
+	  ctss = true;
 	}
 
 
-	string packetText = "tankIDName|" + creds::gtUsername + "\ntankIDPass|" + creds::gtPassword + "\nrequestedName|SmileZero\nf|1\nprotocol|94\ngame_version|3.47\nlmode|0\ncbits|0\nplayer_age|100\nGDPR|1\nhash2|" + sHash + "\nmeta|4a3dd2b55315ac3eb4.com\nfhash|-716928004\nrid|" + rid + "\nplatformID|4\ndeviceVersion|0\ncountry|us\nhash|" + fHash + "\nmac|" + utils::generate_mac() + "\nwk|" + wk + "\nzf|13837395" + token;
+	//string packetText = "tankIDName|" + creds::gtUsername + "\ntankIDPass|" + creds::gtPassword + "\nrequestedName|SmileZero\nf|1\nprotocol|94\ngame_version|3.47\nlmode|0\ncbits|0\nplayer_age|100\nGDPR|1\nhash2|" + sHash + "\nmeta|4a3dd2b55315ac3eb4.com\nfhash|-716928004\nrid|" + rid + "\nplatformID|4\ndeviceVersion|0\ncountry|us\nhash|" + fHash + "\nmac|" + utils::generate_mac() + token + "\nwk|" + wk + "\nzf|13837395";
+	string packetText = "tankIDName|" + creds::gtUsername + "\ntankIDPass|" + creds::gtPassword + "\nrequestedName|SmileZero\nf|1\nprotocol|112\ngame_version|3.47\nfz|7010984\nlmode|1\ncbits|0\nplayer_age|28\nGDPR|1\nhash2|-82716716\nmeta|growbrew.com\nfhash|-716928004\nrid|014D372930A17D6E0A0C32E9071C1703\nplatformID|0\ndeviceVersion|0\ncountry|us\nhash|-1663976460\nmac|2c:6f:c9:50:d0:69" + token + "\nwk|5BDD27FA30DA784971BA854321673699\nzf|1486951257";
 	return packetText;
 }
 
