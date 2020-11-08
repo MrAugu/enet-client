@@ -182,11 +182,7 @@ int main()
 				} else if (messageType == 6) {
 					cout << get_text_pointer(event.packet) << endl;
 					// Getting:
-					// eventType | 0
-					// eventName | 102_PLAYER.AUTHENTICATION
-					// Name | ^^ (insert username here)
-					// Authenticated | 0
-					// Authentication_error | 20
+
 				}
 
 				break;

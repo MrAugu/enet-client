@@ -27,9 +27,9 @@ int packet::get_message_type(ENetPacket* packet) {
 	}
 }
 
-void packet::send(int type, string content, ENetPeer* peer) {
+void packet::sendPacket(int type, string content, ENetPeer* peer) {
 	ENetPacket* packet = enet_packet_create(0, content.length() + 5, 1);
-	memcpy(packet->data, &content, 4);
+	memcpy(packet->data, &type, 4);
 	memcpy((packet->data) + 4, content.c_str(), content.length());
 	enet_peer_send(peer, 0, packet);
 }
