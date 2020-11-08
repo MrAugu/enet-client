@@ -5,6 +5,7 @@
 #include "Packet.h"
 #include <stdexcept>
 #include <random>
+#include <fstream>
 
 ENetHost * client;
 ENetAddress serverAddress;
@@ -17,7 +18,6 @@ bool ctss = false;
 
 using namespace std;
 using namespace packet;
-
 
 void createConnection(string ip, int port) {
 	client = enet_host_create(NULL, 1, 2, 0, 0);
@@ -323,7 +323,10 @@ void SerializeFromMem(byte *pSrc, int bufferSize, int *pBytesReadOut, int netId)
 	if (action == "OnSendToServer") {
 		OnSendToServer(((OnSendToServerStruct*)dataStruct)->address, ((OnSendToServerStruct*)dataStruct)->port, ((OnSendToServerStruct*)dataStruct)->userId, ((OnSendToServerStruct*)dataStruct)->token);
 	} else if (action == "OnConsoleMessage") {
-		cout << ((OnConsoleMessageStruct*)dataStruct)->message << endl;
+		fstream file;
+		file.open("console.txt", ios::out | ios::app);
+		file << ((OnConsoleMessageStruct*)dataStruct)->message << endl;
+		file.close();
 		//OnConsoleMessage(((OnConsoleMessageStruct*)dataStruct)->message);
 	} else if (action == "OnPlayPositioned") {
 		//OnPlayPositioned(((OnPlayPositionedStruct*)dataStruct)->sound);
@@ -478,22 +481,26 @@ int main()
 
 				if (messageType == 1) {
 					string logonPacket = generateTankPacket();
-					cout << logonPacket << endl;
+					//cout << logonPacket << endl;
 					sendPacket(2, logonPacket, peer);
 					cout << "Sent the login packet." << endl;
 				} else if (messageType == 6) {
-					cout << "Authentification has failed" << endl;
-					cout << get_text_pointer(event.packet) << endl;
+					//cout << "Authentification has failed" << endl;
+					string text = get_text_pointer(event.packet);
+					cout << text << endl;
+
+					if (text.find("Authenticated|1")) {
+						sendPacket(2, "action|enter_game\n", peer);
+					}
 				} else if (messageType == 3) {
-					cout << get_text_pointer(event.packet) << endl;
+					//cout << get_text_pointer(event.packet) << endl;
 				} else if (messageType == 4) {
 					byte* pointer = get_struct_pointer_from_tank(event.packet);
 					cout << "Processing tank packet with id of: " << +((char)*pointer) << " Where first byte is " << to_string(pointer[0]) << endl;
 
 					SerializeFromMem(get_extended_data_pointer(pointer), *(int*)(pointer + 52), 0, *(int*)(pointer + 4));
-				}
-				else if (messageType == 7) {
-					sendPacket(2, "action|enter_game\n", peer);
+				} else if (messageType == 7) {
+					//sendPacket(2, "action|enter_game\n", peer);
 				}
 
 				break;
