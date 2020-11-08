@@ -10,6 +10,8 @@ namespace packet {
 	char* get_data(char* data);
 	char* get_text_pointer(ENetPacket* packet);
 	int get_message_type(ENetPacket* packet);
+	byte* get_struct_pointer_from_tank(ENetPacket* packet);
+	byte* get_extended_data_pointer(byte* b);
 	void sendPacket(int type, string content, ENetPeer* peer);
 	class Packet {
 	private:

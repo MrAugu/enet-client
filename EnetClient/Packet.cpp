@@ -33,3 +33,26 @@ void packet::sendPacket(int type, string content, ENetPeer* peer) {
 	memcpy((packet->data) + 4, content.c_str(), content.length());
 	enet_peer_send(peer, 0, packet);
 }
+
+byte* packet::get_struct_pointer_from_tank(ENetPacket *packet) {
+	unsigned int packetLenght = packet->dataLength;
+	byte* result = NULL;
+
+	if (packetLenght >= 0x3C) {
+		byte* packetData = packet->data;
+		result = packetData + 4;
+		if (*(BYTE*)(packetData + 16) & 8) {
+			if (packetLenght < *(int*)(packetData + 56) + 60) {
+				result = 0;
+			}
+		} else {
+			int zero = 0;
+			memcpy(packetData + 56, &zero, 4);
+		}
+	}
+	return result;
+}
+
+byte* packet::get_extended_data_pointer(byte* b) {
+	return (byte*)((int)(b + 56));
+}
